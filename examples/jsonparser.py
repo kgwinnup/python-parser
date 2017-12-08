@@ -21,9 +21,9 @@ def jpair():
         return sequence1(2, char('{'), spaces1(), sepby(_jpair(), sequence(spaces1(), char(','), spaces1())), spaces1(), char('}'))
 
     def _jpair():
-        return sequence2(0,4, jkey(), spaces1(), char(':'), spaces1(), jkey())
+        return sequence2(0,4, jkey(), spaces1(), char(':'), spaces1(), jkey(), type='jpair')
 
-    return sequence2(0,4, jkey(), spaces1(), char(':'), spaces1(), oneof(jstring(), jbool(), jlist(), _jobject()))
+    return sequence2(0,4, jkey(), spaces1(), char(':'), spaces1(), oneof(jstring(), jbool(), jlist(), _jobject()), type='jpair')
 
 def jobject():
     return sequence1(2, char('{'),

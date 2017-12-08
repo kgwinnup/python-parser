@@ -78,6 +78,17 @@ def many(f, _type='string'):
         return Parser(cur._state, cur._offset, val, _type)
     return _many
 
+def manyN(n, f, _type='string'):
+    def _manyN(parser):
+        acc = []
+        cur = parser
+        for i in range(n):
+            temp = f(cur)
+            acc.append(temp._value)
+            cur = temp
+        return Parser(cur._state, cur._offset, acc, _type)
+    return _manyN
+
 def many_till(f, g, _type='string'):
     """this will capture all tokens f until a triger g"""
     def _many_till(parser):

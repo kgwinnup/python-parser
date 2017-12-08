@@ -119,17 +119,6 @@ def test_many_seq():
     assert ret._value[0] == 'hello'
     assert ret._value[2] == 'aa/bb'
 
-'''
-def test_parse_manysequence():
-    s = "in file: xl/vbaProject.bin - OLE stream: 'VBA/ThisWorkbook\n'"
-    ret = parse(sequence(
-        word('in file:'),
-        spaces1(),
-        many(oneof(char('/'), alphanum(), char('.'))),
-        spaces1(),
-        skip_until(char('\n'))), s)
-    print('----')
-    print(ret)
-    print('----')
-    assert ret._value == 'xl/vbaProject.bin'
-'''
+def test_many_n():
+    ret = parse(manyN(3, alphanum()), 'abcdefg')
+    assert ret._value == ['a', 'b', 'c']

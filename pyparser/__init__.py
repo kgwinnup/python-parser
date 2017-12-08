@@ -45,7 +45,11 @@ def parse(f, _bytes):
 def char(rpattern, _bytes=False):
     """This combinator will parse a single char"""
     def _char(parser):
-        if re.match(rpattern, parser.peek(1)):
+        if rpattern == '.':
+            p = '[.]'
+        else:
+            p = rpattern
+        if re.match(p, parser.peek(1)):
             return parser.read(1)
         raise ParseError("Char: Error matching pattern, found '%s', expecting '%s'" % (parser.peek(1), rpattern))
     return _char
@@ -63,7 +67,7 @@ def many(f, _type='string'):
     def _many(parser):
         acc = []
         cur = parser
-        for i in range(len(cur._state)):
+        while True:
             try:
                 temp = f(cur)
                 acc.append(temp._value)

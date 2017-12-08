@@ -10,6 +10,10 @@ def test_parse_char():
     ret = parse(char('a'), 'abcde')
     assert ret._value == 'a'
 
+def test_parse_specialchars():
+    ret = parse(char('/'), '/asdf.')
+    assert ret._value == '/'
+
 def test_parse_word():
     ret = parse(word('hello'), 'hello world abcde')
     assert ret._value == 'hello'
@@ -99,3 +103,31 @@ def test_parse_optional():
 def test_many_till():
     ret = parse(many_till(alphanum(), char('\n')), 'aaaaaa\nBBBBB')
     assert ret._value == 'aaaaaa'
+    assert ret._offset == 7
+
+def test_many_oneof():
+    ret = parse(many(oneof(char('/'), alphanum())), '///xx/bbb.py adf')
+    assert ret._value == '///xx/bbb'
+
+def test_many_seq():
+    ret = parse(sequence(word('hello'),
+        spaces1(),
+        many(oneof(char('/'), alphanum(), char('.'))),
+        spaces1()), 'hello      aa/bb  ')
+    assert ret._value[0] == 'hello'
+    assert ret._value[2] == 'aa/bb'
+
+'''
+def test_parse_manysequence():
+    s = "in file: xl/vbaProject.bin - OLE stream: 'VBA/ThisWorkbook\n'"
+    ret = parse(sequence(
+        word('in file:'),
+        spaces1(),
+        many(oneof(char('/'), alphanum(), char('.'))),
+        spaces1(),
+        skip_until(char('\n'))), s)
+    print('----')
+    print(ret)
+    print('----')
+    assert ret._value == 'xl/vbaProject.bin'
+'''

@@ -96,7 +96,8 @@ def oneof(*fs, _type='string'):
     def _oneof(parser):
         for f in fs:
             try:
-                return f(parser).set_type(_type)
+                temp = f(parser)
+                return Parser(temp.state, temp.offset, temp.value, _type)
             except:
                 pass
         raise ParseError("Oneof: no pattern match found")

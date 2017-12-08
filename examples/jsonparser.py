@@ -14,11 +14,25 @@ def jlist():
     return sequence1(1, char('\['), sepby(oneof(jstring(), jbool(), jnumber()), sequence(spaces1(), char(','), spaces1())), char(']'))
 
 def jpair():
+    def jobject2():
+        return sequence1(2, char('{'),
+                            spaces1(),
+                            sepby(jpair2(), sequence(spaces1(), char(','), spaces1())),
+                            spaces1(),
+                            char('}'))
+    def jpair2():
+        return sequence2(0,4, oneof(jstring(), jbool(), jnumber()), 
+                                    spaces1(), 
+                                    char(':'), 
+                                    spaces1(), 
+                                    oneof(jstring(), jbool(), jlist()))
+
+
     return sequence2(0,4, oneof(jstring(), jbool(), jnumber()), 
                                 spaces1(), 
                                 char(':'), 
                                 spaces1(), 
-                                oneof(jstring(), jbool(), jlist()))
+                                oneof(jstring(), jbool(), jlist(), jobject2()))
 def jobject():
     return sequence1(2, char('{'),
                         spaces1(),
@@ -33,6 +47,6 @@ if __name__ == '__main__':
     print(ret)
     ret = parse(jlist(), '["hello", "world", "yo"]')
     print(ret)
-    ret = parse(jobject(), '{"hello": "world", "foo": "bar", "zoo": "boo"}')
+    ret = parse(jobject(), '{"hello": "world", "foo": "bar", "zoo": "boo", "dude": {"yo": "man"}}')
     print(ret)
 

@@ -74,7 +74,10 @@ def many(f, _type='string'):
                 cur = temp
             except:
                 break
-        val = ''.join(acc)
+        if _type == 'string':
+            val = ''.join(acc)
+        else:
+            val = acc
         return Parser(cur._state, cur._offset, val, _type)
     return _many
 
@@ -103,7 +106,10 @@ def many_till(f, g, _type='string'):
                 temp = f(cur)
                 acc.append(temp._value)
                 cur = temp
-        val = ''.join(acc)
+        if _type == 'string':
+            val = ''.join(acc)
+        else:
+            val = acc
         return Parser(cur._state, cur._offset, val, _type)
     return _many_till
 

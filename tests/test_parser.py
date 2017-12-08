@@ -103,7 +103,7 @@ def test_parse_optional():
     assert ret._value == 100
 
 def test_many_till():
-    ret = parse(many_till(alphanum(), char('\n')), 'aaaaaa\nBBBBB')
+    ret = parse(many_till(alphanum(), char('\n'), _type='string'), 'aaaaaa\nBBBBB')
     assert ret._value == 'aaaaaa'
     assert ret._offset == 7
 

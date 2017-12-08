@@ -33,6 +33,9 @@ class Parser:
         return self
 
 def parse(f, _bytes):
+    """
+    Parse function will take a parser combinator and parse some set of bytes
+    """
     if type(_bytes) == Parser:
         return f(_bytes)
     else:
@@ -40,6 +43,7 @@ def parse(f, _bytes):
         return f(s)
 
 def char(rpattern, _bytes=False):
+    """This combinator will parse a single char"""
     def _char(parser):
         if re.match(rpattern, parser.peek(1)):
             return parser.read(1)
@@ -47,6 +51,7 @@ def char(rpattern, _bytes=False):
     return _char
 
 def word(word):
+    """matches a given word"""
     def _word(parser):
         if parser.peek(len(word)) == word:
             return parser.read(len(word))
@@ -54,6 +59,7 @@ def word(word):
     return _word
 
 def many(f, _type='string'):
+    """matches many of one type of combinator, ie many(digit()) will parse until it finds a non number"""
     def _many(parser):
         acc = []
         cur = parser
@@ -68,7 +74,31 @@ def many(f, _type='string'):
         return Parser(cur._state, cur._offset, val, _type)
     return _many
 
+def many_till(f, g, _type='string'):
+    """this will capture all tokens f until a triger g"""
+    def _many_till(parser):
+        cur = parser
+        acc = []
+        for i in range(len(cur._state)):
+            temp = f(cur)
+            acc.append(temp._value)
+            cur = temp
+            try:
+                temp = g(cur)
+                cur = temp
+                break
+            except:
+                pass
+        val = ''.join(acc)
+        return Parser(cur._state, cur._offset, val, _type)
+    return _many_till
+
 def sequence(*fs, **kwargs):
+    """
+    sequence is the primary parser used for seperating out different patterns.
+    This takes an additional parameter named 'type' which will set the Parser
+    _datatype value.
+    """
     def _sequence(parser):
         acc = []
         cur = parser
@@ -80,19 +110,31 @@ def sequence(*fs, **kwargs):
     return _sequence
 
 def sequence1(index, *fs, **kwargs):
+    """This will operate the same as sequence, except save 1 value from
+    the parsed list (by its index) instead of the entire list."""
     def _sequence1(parser):
         temp = sequence(*fs, **kwargs)(parser)
         return temp.set_value(temp._value[index])
     return _sequence1
 
 def sequence2(index, index2, *fs, **kwargs):
+    """This will operate the same as sequence, except save 2 value from
+    the parsed list (by its index) instead of the entire list."""
     def _sequence1(parser):
         temp = sequence(*fs, **kwargs)(parser)
         return temp.set_value((temp._value[index], temp._value[index2]))
     return _sequence1
 
+def sequence3(idx, idx2, idx3, *fs, **kwargs):
+    """This will operate the same as sequence, except save 3 value from
+    the parsed list (by its index) instead of the entire list."""
+    def _sequence1(parser):
+        temp = sequence(*fs, **kwargs)(parser)
+        return temp.set_value((temp._value[idx], temp._value[idx2], temp._value[idx3]))
+    return _sequence1
 
 def oneof(*fs, _type='string'):
+    """will take the first acceptable combinator passed in and return that parser"""
     def _oneof(parser):
         for f in fs:
             try:
@@ -104,6 +146,7 @@ def oneof(*fs, _type='string'):
     return _oneof
 
 def sepby(f, by):
+    """return a list of parsers based on one combinator 'f' seperated by combinator 'by'"""
     def _sepby(parser):
         acc = []
         cur = parser
@@ -114,7 +157,7 @@ def sepby(f, by):
                 cur = temp
             except:
                 break
-                
+
             try:
                 temp = by(cur)
                 cur = temp
@@ -125,6 +168,7 @@ def sepby(f, by):
     return _sepby
 
 def anychar():
+    """basically increment state offset by one no matter and return the parsed item"""
     def _anychar(parser):
         val = parser._state[0]
         return parser.read(1).set_value(val)
@@ -159,7 +203,7 @@ def space(): return char('[ ]')
 
 def spaces(): return many(space())
 
-def spaces1(): 
+def spaces1():
     def _spaces1(parser):
         try:
             return spaces()(parser)
@@ -169,7 +213,7 @@ def spaces1():
 
 def newline(): return char('\n')
 
-def integer(): 
+def integer():
     def _integer(parser):
         d = many(digit())(parser)
         return d.set_value(int(d._value)).set_type('integer')
@@ -181,6 +225,3 @@ def scientific():
         val = float(temp._value[0] + temp._value[1] + temp._value[2])
         return Parser(temp._state, temp._offset, val, 'float')
     return _float
-
-
-

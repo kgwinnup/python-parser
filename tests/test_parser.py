@@ -62,7 +62,7 @@ def test_parse_alphanum():
 def test_parse_manyalphanum():
     ret = parse(many(alphanum()), 'afwefd adfqwef adfs')
     assert ret._value == 'afwefd'
-    assert ret._offset == 6 
+    assert ret._offset == 6
 
 def test_parse_spaces():
     ret = parse(spaces(), '      hello ')
@@ -96,15 +96,6 @@ def test_parse_optional():
     assert ret._offset == 3
     assert ret._value == 100
 
-'''
-def test_parse_sequence2():
-    ret = parse(sequence([spaces1(), char(','), spaces1()], lambda x: x[1]), '     , ')
-    assert ret._value._value == ','
-    assert ret._offset == 7
-    ret = parse(sequence([spaces1(), char(','), spaces1()], lambda x: x[1]), ', ')
-    assert ret._value == ','
-    assert ret._offset == 2
-'''
-
-
-
+def test_many_till():
+    ret = parse(many_till(alphanum(), char('\n')), 'aaaaaa\nBBBBB')
+    assert ret._value == 'aaaaaa'

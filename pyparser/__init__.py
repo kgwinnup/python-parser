@@ -1,28 +1,24 @@
 
 import re
-import functools
 
 class ParseError(Exception):
     pass
 
 class Parser:
-    def __init__(self, state, offset, value='', datatype='char'):
+    def __init__(self, state, offset, value=None, datatype=None):
         self.state = state
         self.offset = offset
         self.value = value
         self.datatype = datatype
 
     def __repr__(self):
-        if len(self.state) < 20:
-            return "State<'%s', %s>" % (self.state[:20], self.offset)
-        else:
-            return "State<'%s...', %s>" % (self.state[:20], self.offset)
+        return "Parser<'%s', '%s'>" % (self.datatype, self.value)
 
     def peek(self, n):
         return self.state[self.offset:self.offset + n]
 
-    def read(self, n):
-        return Parser(self.state, self.offset + n)
+    def read(self, n, _type='string'):
+        return Parser(self.state, self.offset + n, self.state[self.offset:self.offset + n], _type)
 
     def incr_offset(self):
         self.offset = self.offset + 1
@@ -46,18 +42,18 @@ def parse(f, _bytes):
 def char(rpattern, _bytes=False):
     def _char(parser):
         if re.match(rpattern, parser.peek(1)):
-            return parser.read(1).set_value(parser.peek(1)).set_type('char')
+            return parser.read(1)
         raise ParseError("Char: Error matching pattern, found '%s', expecting '%s'" % (parser.peek(1), rpattern))
     return _char
 
 def word(word):
     def _word(parser):
         if parser.peek(len(word)) == word:
-            return parser.read(len(word)).set_value(word).set_type('string')
-        raise ParseError("Word: Error matching pattern, found '%s', expecting '%s'" % (parser.peek(len(word)), word))
+            return parser.read(len(word))
+        raise ParseError("Word: Error matching pattern, found '%s', expecting '%s', offset %s" % (parser.peek(len(word)), word, parser.offset))
     return _word
 
-def many(f):
+def many(f, _type='string'):
     def _many(parser):
         acc = []
         cur = parser
@@ -69,25 +65,38 @@ def many(f):
             except:
                 break
         val = ''.join(acc)
-        return cur.set_value(val)
+        return Parser(cur.state, cur.offset, val, _type)
     return _many
 
-def sequence(fs, f = lambda x: x, _type='string'):
+def sequence(*fs):
     def _sequence(parser):
         acc = []
         cur = parser
-        for g in fs:
-            temp = g(cur)
+        for f in fs:
+            temp = f(cur)
             acc.append(temp.value)
             cur = temp
-        return cur.set_value(f(acc)).set_type(_type)
+        return Parser(cur.state, cur.offset, acc, 'list')
     return _sequence
 
-def oneof(fs):
+def sequence1(index, *fs):
+    def _sequence1(parser):
+        temp = sequence(*fs)(parser)
+        return temp.set_value(temp.value[index])
+    return _sequence1
+
+def sequence2(index, index2, *fs):
+    def _sequence1(parser):
+        temp = sequence(*fs)(parser)
+        return temp.set_value((temp.value[index], temp.value[index2]))
+    return _sequence1
+
+
+def oneof(*fs, _type='string'):
     def _oneof(parser):
         for f in fs:
             try:
-                return f(parser)
+                return f(parser).set_type(_type)
             except:
                 pass
         raise ParseError("Oneof: no pattern match found")
@@ -97,18 +106,21 @@ def sepby(f, by):
     def _sepby(parser):
         acc = []
         cur = parser
-        while len(cur.state) > 0:
-            temp = f(cur)
-            acc.append(temp)
-            cur = temp
-            
+        while True:
+            try:
+                temp = f(cur)
+                acc.append(temp)
+                cur = temp
+            except:
+                break
+                
             try:
                 temp = by(cur)
                 cur = temp
             except:
                 break
 
-        return cur.set_value(acc).set_type('list')
+        return Parser(cur.state, cur.offset, acc, 'list')
     return _sepby
 
 def anychar():
@@ -117,7 +129,7 @@ def anychar():
         return parser.read(1).set_value(val)
     return _anychar
 
-def until(f):
+def skip_until(f):
     def _until(parser):
         cur = parser
         for i in range(len(parser.state)):
@@ -130,6 +142,14 @@ def until(f):
         raise ParseError("Until: unable to find until pattern")
     return _until
 
+def optional(f):
+    def _optional(parser):
+        try:
+            return f(parser)
+        except:
+            return parser
+    return _optional
+
 def digit(): return char('[0-9]')
 
 def alphanum(): return char('[0-9a-zA-Z]')
@@ -137,6 +157,14 @@ def alphanum(): return char('[0-9a-zA-Z]')
 def space(): return char('[ ]')
 
 def spaces(): return many(space())
+
+def spaces1(): 
+    def _spaces1(parser):
+        try:
+            return spaces()(parser)
+        except:
+            return parser
+    return _spaces1
 
 def newline(): return char('\n')
 
@@ -148,7 +176,9 @@ def integer():
 
 def scientific():
     def _float(parser):
-        return sequence([many(digit()), char('.'), many(digit())], lambda xs: float(xs[0] + xs[1] + xs[2]))(parser)
+        temp = sequence(many(digit()), char('.'), many(digit()))(parser)
+        val = float(temp.value[0] + temp.value[1] + temp.value[2])
+        return Parser(temp.state, temp.offset, val, 'float')
     return _float
 
 

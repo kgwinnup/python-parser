@@ -173,20 +173,21 @@ def sepby(f, by):
 
 def anychar():
     """basically increment state offset by one no matter and return the parsed item"""
-    return char('^.')
+    return char('.*')
 
-def skip_until(f):
-    def _until(parser):
+def skip_till(f):
+    def _skip_till(parser):
         cur = parser
-        for i in range(len(parser._state)):
+        while True:
             try:
                 temp = f(cur)
                 return temp
             except:
                 temp = anychar()(cur)
                 cur = temp
+
         raise ParseError("Until: unable to find until pattern")
-    return _until
+    return _skip_till
 
 def optional(f):
     def _optional(parser):

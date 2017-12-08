@@ -86,12 +86,14 @@ def test_parse_scientific():
     assert ret._value == 10.0001
 
 def test_parse_until():
-    ret = parse(skip_until(char(':')), 'hello:world')
+    ret = parse(skip_till(char(':')), 'hello:world')
     assert ret._offset == 6
 
 def test_parse_any():
     ret = parse(anychar(), 'adsfasdf')
     assert ret._value == 'a'
+    ret = parse(anychar(), '\nadf')
+    assert ret._value == '\n'
 
 def test_parse_optional():
     ret = parse(optional(integer()), 'asdf')

@@ -95,15 +95,15 @@ def many_till(f, g, _type='string'):
         cur = parser
         acc = []
         while True:
-            temp = f(cur)
-            acc.append(temp._value)
-            cur = temp
             try:
                 temp = g(cur)
                 cur = temp
                 break
             except:
                 pass
+            temp = f(cur)
+            acc.append(temp._value)
+            cur = temp
         val = ''.join(acc)
         return Parser(cur._state, cur._offset, val, _type)
     return _many_till

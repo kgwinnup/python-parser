@@ -113,6 +113,27 @@ def many_till(f, g, _type='string'):
         return Parser(cur._state, cur._offset, val, _type)
     return _many_till
 
+def many_till1(f, g, _type='string'):
+    """this is the same as many_till except it will not increment the parser
+    offset to the end of the 'till' g parser"""
+    def _many_till(parser):
+        cur = parser
+        acc = []
+        while True:
+            try:
+                temp = g(cur)
+                break
+            except:
+                temp = f(cur)
+                acc.append(temp._value)
+                cur = temp
+        if _type == 'string':
+            val = ''.join(acc)
+        else:
+            val = acc
+        return Parser(cur._state, cur._offset, val, _type)
+    return _many_till
+
 def sequence(*fs, **kwargs):
     """
     sequence is the primary parser used for seperating out different patterns.

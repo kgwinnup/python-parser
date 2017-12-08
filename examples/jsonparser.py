@@ -13,26 +13,18 @@ def jnumber():
 def jlist():
     return sequence1(1, char('\['), sepby(oneof(jstring(), jbool(), jnumber()), sequence(spaces1(), char(','), spaces1())), char(']'))
 
+def jkey():
+    return oneof(jstring(), jnumber(), jbool())
+
 def jpair():
-    def jobject2():
-        return sequence1(2, char('{'),
-                            spaces1(),
-                            sepby(jpair2(), sequence(spaces1(), char(','), spaces1())),
-                            spaces1(),
-                            char('}'))
-    def jpair2():
-        return sequence2(0,4, oneof(jstring(), jbool(), jnumber()), 
-                                    spaces1(), 
-                                    char(':'), 
-                                    spaces1(), 
-                                    oneof(jstring(), jbool(), jlist()))
+    def _jobject():
+        return sequence1(2, char('{'), spaces1(), sepby(_jpair(), sequence(spaces1(), char(','), spaces1())), spaces1(), char('}'))
 
+    def _jpair():
+        return sequence2(0,4, jkey(), spaces1(), char(':'), spaces1(), jkey())
 
-    return sequence2(0,4, oneof(jstring(), jbool(), jnumber()), 
-                                spaces1(), 
-                                char(':'), 
-                                spaces1(), 
-                                oneof(jstring(), jbool(), jlist(), jobject2()))
+    return sequence2(0,4, jkey(), spaces1(), char(':'), spaces1(), oneof(jstring(), jbool(), jlist(), _jobject()))
+
 def jobject():
     return sequence1(2, char('{'),
                         spaces1(),

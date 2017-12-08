@@ -46,7 +46,7 @@ def char(rpattern, _bytes=False):
     """This combinator will parse a single char"""
     def _char(parser):
         if rpattern == '.':
-            p = '[.]'
+            p = '\.'
         else:
             p = rpattern
         if re.match(p, parser.peek(1)):
@@ -83,7 +83,7 @@ def many_till(f, g, _type='string'):
     def _many_till(parser):
         cur = parser
         acc = []
-        for i in range(len(cur._state)):
+        while True:
             temp = f(cur)
             acc.append(temp._value)
             cur = temp
@@ -173,10 +173,7 @@ def sepby(f, by):
 
 def anychar():
     """basically increment state offset by one no matter and return the parsed item"""
-    def _anychar(parser):
-        val = parser._state[0]
-        return parser.read(1).set_value(val)
-    return _anychar
+    return char('^.')
 
 def skip_until(f):
     def _until(parser):
